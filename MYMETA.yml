@@ -1,0 +1,25 @@
+---
+abstract: unknown
+author:
+  - 'Tor Ozaki <tor.ozaki@gmail.com>'
+build_requires:
+  ExtUtils::MakeMaker: 6.36
+configure_requires:
+  ExtUtils::MakeMaker: 6.36
+dynamic_config: 0
+generated_by: 'Module::Install version 1.04, CPAN::Meta::Converter version 2.112150'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: p5-OreOre-Readtwit
+no_index:
+  directory:
+    - inc
+    - t
+    - xt
+requires: {}
+resources:
+  license: http://dev.perl.org/licenses/
+  repository: git://github.com/TrainingCamp2012/p5-OreOre-Readtwit.git
+version: 0.01
