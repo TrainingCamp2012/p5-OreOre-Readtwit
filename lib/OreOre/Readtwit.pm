@@ -21,7 +21,7 @@ sub new {
     #プラグインにしましょう
     my $yaml = YAML::LoadFile($opt{config});
     my $http = '^https?://(www.)?';
-    my $expander = Util::ShortUrlExpand->new(%{$yaml->{expander}});
+    my $expander = OreOre::Readtwit::Util::ShortUrlExpand->new(%{$yaml->{expander}});
     $self->{conf} = +{
         deny_id => Regexp::Assemble->new()->track->add( @{ delete $yaml->{id} } ),
         deny_hashtag => Regexp::Assemble->new()->track->add( map { "^$_\$" } @{ delete $yaml->{hashtag} } ),
