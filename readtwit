@@ -8,6 +8,7 @@ use lib File::Spec->catdir($FindBin::Bin, 'lib');
 use OreOre::ReadTwit;
 
 use Getopt::Long;
+use Config::Pit;
 
 my $config = File::Spec->catfile($FindBin::Bin, 'config.yaml');
 GetOptions('--config=s', \$config, '--version' => \my $version);
@@ -18,5 +19,5 @@ if ($version) {
     exit;
 }
 
-OreOre::Readtwit->bootstrap(config => $config);
+OreOre::Readtwit->bootstrap(config => $config, pit => pit_get("twitter.com"));
 
