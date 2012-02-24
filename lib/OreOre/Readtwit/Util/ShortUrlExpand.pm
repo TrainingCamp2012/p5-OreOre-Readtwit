@@ -1,4 +1,4 @@
-package Util::ShortUrlExpand;
+package OreOre::Readtwit::Util::ShortUrlExpand;
 
 our $VERSION = '0.01';
 
@@ -22,7 +22,7 @@ sub _build_re {
         require JSON;
         my $res = ($self->ua->get($self->source))[4]
             or die "Unabel to get ShortUrlServices: $!";
-        for my $row ( @{ from_json( $res) } )
+        for my $row ( @{ JSON::from_json( $res) } )
         {
             $re->add($row->{data}->{domain});
         }
