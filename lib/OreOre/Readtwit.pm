@@ -1,13 +1,19 @@
 package OreOre::Readtwit;
 use strict;
 use warnings;
+
 our $VERSION = '0.01';
 
 use YAML;
 use AnyEvent::Twitter::Stream;
 use Regexp::Assemble;
 use Regexp::Common;
-use File::Temp qw(tempfile);
+use XML::FeedPP;
+use URI;
+use POSIX qw/setlocale LC_TIME/;
+use Time::Piece;
+use File::Temp qw/tempfile/;
+
 use FindBin::libs;
 use OreOre::Readtwit::Util::ShortUrlExpand;
 
@@ -19,23 +25,26 @@ sub new {
     }, $class;
 
     #プラグインにしましょう
+    #YAMLに該当フィールドがないと死にます，エラー処理をしてください
     my $yaml = YAML::LoadFile($opt{config});
     my $http = '^https?://(www.)?';
     my $expander = OreOre::Readtwit::Util::ShortUrlExpand->new(%{$yaml->{expander}});
     $self->{conf} = +{
-        deny_id => Regexp::Assemble->new()->track->add( @{ delete $yaml->{id} } ),
+        deny_id      => Regexp::Assemble->new()->track->add( @{ delete $yaml->{id} } ),
         deny_hashtag => Regexp::Assemble->new()->track->add( map { "^$_\$" } @{ delete $yaml->{hashtag} } ),
-        deny_client => Regexp::Assemble->new()->track->add( @{ $yaml->{client} }),
-        deny_url => Regexp::Assemble->new()->track->add( map { qq{$http$_} }  @{ delete $yaml->{url} }),
-        oauth => $opt{pit} || delete $yaml->{oauth},
+        deny_client  => Regexp::Assemble->new()->track->add( @{ $yaml->{client} }),
+        deny_url     => Regexp::Assemble->new()->track->add( map { qq{$http$_} }  @{ delete $yaml->{url} }),
+        oauth        => $opt{pit} || delete $yaml->{oauth},
         %{$yaml},
     };
     $self->{conf}->{expander} = $expander;
+    $self->log(info => "launch");
 
     $self;
 }
 
 sub ignore {
+    #プラグインにしましょう
     my($self,$tweet) = @_;
     return 1 if !defined $tweet->{entities}{urls};
     return 1 if defined $self->conf->{deny_id}->match($tweet->{user}{screen_name});
@@ -51,25 +60,21 @@ sub on_tweet {
     $self->feedgen($tweet);
 }
 
-use XML::FeedPP;
-use URI;
-use POSIX qw/setlocale LC_TIME/;
-use Time::Piece;
-
 sub feedgen {
     my($self, $tweet) = @_;
 
-    #$tweet->{text} =~ s/$RE{URI}{HTTP}/$self->conf->{expander}->expand($&)/ge ;
+    # filter プラグインにしましょう
+    $tweet->{text} =~ s/$RE{URI}{HTTP}/$self->conf->{expander}->expand($&)/ge ;
 
     my $pubdate = do {
         my $time = $tweet->{created_at};
         my $ffmt = '%Y-%m-%dT%H:%M:%S%z';
         my $pfmt = '%a %b %d %H:%M:%S %z %Y';
-        my $old_locale = setlocale(LC_TIME);
+        my $old  = setlocale(LC_TIME);
         setlocale(LC_TIME,"C");
-        my $t = Time::Piece->strptime($time, $pfmt)->strftime($ffmt);
-        setlocale(LC_TIME,$old_locale);
-        $t;
+        my $now  = Time::Piece->strptime($time, $pfmt)->strftime($ffmt);
+        setlocale(LC_TIME,$old);
+        $now;
     };
     my $feed   = XML::FeedPP::RSS->new(
         language => 'ja',
@@ -103,6 +108,7 @@ sub feedgen {
 }
 
 sub conf {
+    # any::moose と協調とるのめんどうだけど accessor で自動生成してください
     my $self = shift;
     $self->{conf};
 }
@@ -147,10 +153,10 @@ sub run {
     $done->recv;
     undef $streamer;
 
-    my $wait = $connected ? 0 : 2;
+    my $wait    = $connected ? 0 : 2;
 
     my $wait_cv = AE::cv;
-    my $wait_t = AE::timer $wait, 0, $wait_cv;
+    my $wait_t  = AE::timer $wait, 0, $wait_cv;
     $wait_cv->recv;
 
 }
@@ -162,7 +168,7 @@ sub log {
 
     chomp($msg);
 
-    warn "[$level] $msg\n";
+    warn scalar(localtime)," [$level] $msg\n";
 }
 
 my %levels = (
