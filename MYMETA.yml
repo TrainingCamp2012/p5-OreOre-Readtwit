@@ -7,12 +7,12 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 6.36
 dynamic_config: 0
-generated_by: 'Module::Install version 1.04, CPAN::Meta::Converter version 2.112150'
+generated_by: 'Module::Install version 1.04, CPAN::Meta::Converter version 2.112621'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
-name: p5-OreOre-Readtwit
+name: OreOre-Readtwit
 no_index:
   directory:
     - inc

@@ -4,7 +4,7 @@
       "Tor Ozaki <tor.ozaki@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Install version 1.04, CPAN::Meta::Converter version 2.112150",
+   "generated_by" : "Module::Install version 1.04, CPAN::Meta::Converter version 2.112621",
    "license" : [
       "perl_5"
    ],
@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : "2"
    },
-   "name" : "p5-OreOre-Readtwit",
+   "name" : "OreOre-Readtwit",
    "no_index" : {
       "directory" : [
          "inc",
