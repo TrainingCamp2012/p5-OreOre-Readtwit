@@ -7,7 +7,8 @@ This script extract a link url as RSS feed from your Twitter timeline; a.k.a per
 This script output a feed file within only an article. If you read feed on feed reader service, you can use Plagger.
 
     # run as deamon
-    ./readtwit &
+    ./readtwit -c config_twit.yml &
+    #sample config file is in t/ directry
 
     # aggregate & publish with plagger
     plagger -c config.yml
