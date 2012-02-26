@@ -1,0 +1,46 @@
+oauth:
+  consumer_key: hogefuga
+  consumer_secret: hogefuga
+  access_token: hogefuga
+  access_token_secret: hogefuga
+
+id:
+  - _camerakozo
+  - 1stepup
+
+client:
+  - twitterfeed
+  - Paper.li
+  - twittbot.net
+
+hashtag:
+  - installNow
+  - geinin2
+  - nowplaying
+  - 30thou
+  - bookmeter
+
+url:
+  - last.fm
+  - imakoko-iphone.appspot.com
+  - 30thou.com
+  - shindanmaker.com
+  - rss.rssad.jp
+  - paper.li
+  - bitly.com/a/warning
+  - 4sq.com
+  - foursquare.com
+  - market.android.com
+  - tou.ch
+  - qa-now.com/d
+  - shindanmaker.com
+  - gentwoo.elisp.net/users
+
+expander:
+  source: http://wedata.net/databases/ShortUrlServices/items_all.json
+
+log:
+  level: error
+
+dir: /tmp
+

@@ -1,15 +1,19 @@
 use strict;
 use warnings;
-use AnyEvent;
 use AnyEvent::Twitter::Stream;
-use AnyEvent::Util qw(guard);
-use Data::Dumper;
 use JSON;
+use YAML;
 use Test::More;
 use Test::TCP;
 use Test::Requires qw(Plack::Builder Plack::Handler::Twiggy Try::Tiny);
 use Test::Requires { 'Plack::Request' => '0.99' };
+use Hook::LexWrap;
+use FindBin;
+use File::Temp;
+use File::Compare;
+use XML::FeedPP;
 
+use OreOre::Readtwit;
 
 foreach my $enable_chunked (0, 1) {
     test_tcp(
@@ -32,62 +36,27 @@ foreach my $enable_chunked (0, 1) {
 
             note("try $item->{method}");
 
-            {
-                my $done = AE::cv;
-                my $streamer = AnyEvent::Twitter::Stream->new(
-                    username => 'test',
-                    password => 's3cr3t',
-                    method => $item->{method},
-                    timeout => 2,
-                    on_tweet => sub {
-                        my $tweet = shift;
+            my @filenames;
+            wrap 'File::Temp::tempfile',
+                post => sub {
+                    push @filenames,$_[-1]->[1];
+            };
+            my $readtwit = OreOre::Readtwit->new(
+                config => "$FindBin::Bin/config.yml",
+            );
 
-                        #if ($tweet->{hello}) {
-                        #    note(Dumper $tweet);
-                        #    is($tweet->{user}, 'test');
-                        #    is($tweet->{path}, "/1/statuses/$item->{method}.json");
-                        #    is_deeply($tweet->{param}, $item->{option});
+            ok( $readtwit->run(),"readtwit run");
+            my $reference_file = "$FindBin::Bin/sample.rss";
+            ok( compare($filenames[0],$reference_file) == 0);
 
-                        #    if (%{$item->{option}}) {
-                        #        is($tweet->{request_method}, 'POST');
-                        #    } else {
-                        #        is($tweet->{request_method}, 'GET');
-                        #    }
-                        #} else {
-                        $done->send, return if $tweet->{count} > $count_max;
-                        #}
+            my $output = XML::FeedPP::RSS->new($filenames[0]);
+            ok( $output->link, "http://instagr.am/p/MuW67/", "expanded url");
 
-                        $received++;
-                    },
-                    on_delete => sub {
-                        my ($tweet_id, $user_id) = @_;
-                        $deleted++;
-                        $received++;
-                    },
-                    on_friends => sub {
-                        my $friends = shift;
-                        is_deeply($friends, [qw/1 2 3/]);
-                    },
-                    on_event => sub {
-                        $event++;
-                        $done->send;
-                    },
-                    on_error => sub {
-                        my $msg = $_[2] || $_[0];
-                        fail("on_error: $msg");
-                        $done->send;
-                    },
-                    %{$item->{option}},
-                );
-                $streamer->{_guard_for_testing} = guard { $destroyed = 1 };
+            $reference->
+            note("delete temp files");
+            unlink $_ for @filenames;
 
-                $done->recv;
-            }
 
-            is $deleted, 0, 'deleted no tweet';
-
-            is $event, 1, 'got one event';
-            is $destroyed, 1, 'destroyed';
         },
         server => sub {
             my $port = shift;
@@ -118,23 +87,47 @@ sub run_streaming_server {
             }) . "\x0D\x0A");
 
             my $t; $t = AE::timer(0, 0.2, sub {
-                try {
-                    $writer->write(encode_json({
-                        event => {foo => 'bar'},
-                    }) . "\x0D\x0A");
+                    try {
+                        $writer->write(encode_json({
+                                    created_at => "Sat Sep 10 22:23:38 +0000 2011",
+                                    entities => {
+                                        hashtags => [
+                                            {
+                                                indices => [
+                                                    32,
+                                                    42
+                                                ],
+                                                text => "tcdisrupt"
+                                            }
+                                        ],
+                                        urls => [
+                                            {
+                                                display_url => "instagr.am/p/MuW67/",
+                                                expanded_url => "http://instagr.am/p/MuW67/",
+                                                indices => [
+                                                    67,
+                                                    86
+                                                ],
+                                                url => "http://t.co/6J2EgYM"
+                                            }
+                                        ],
+                                    },
+                                    source => "<a href=\"http://instagr.am\" rel=\"nofollow\">Instagram</a>",
+                                    text => "\@twitter meets \@seepicturely at #tcdisrupt cc.\@boscomonkey \@episod http://t.co/6J2EgYM",
+                                    user => {
+                                        name => "Eoin McMillan ",
+                                        screen_name => "imeoin",
+                                    }
+                                }) . "\x0D\x0A");
                 }catch{
                     undef $t;
                 };
+                $writer->close if rand > 0.8;
             });
         };
     };
 
     my $app = builder {
-        enable 'Auth::Basic', realm => 'Firehose', authenticator => sub {
-            my ($user, $pass) = @_;
-
-            return $user eq 'test' && $pass eq 's3cr3t';
-        };
         enable 'Chunked' if $enable_chunked;
 
         mount '/2/' => $user_stream;
