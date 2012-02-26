@@ -12,7 +12,7 @@ use XML::FeedPP;
 use URI;
 use POSIX qw/setlocale LC_TIME/;
 use Time::Piece;
-use File::Temp qw/tempfile/;
+use File::Temp;
 
 use FindBin::libs;
 use OreOre::Readtwit::Util::ShortUrlExpand;
@@ -34,7 +34,7 @@ sub new {
         deny_hashtag => Regexp::Assemble->new()->track->add( map { "^$_\$" } @{ delete $yaml->{hashtag} } ),
         deny_client  => Regexp::Assemble->new()->track->add( @{ $yaml->{client} }),
         deny_url     => Regexp::Assemble->new()->track->add( map { qq{$http$_} }  @{ delete $yaml->{url} }),
-        oauth        => $opt{pit} || delete $yaml->{oauth},
+        oauth        => defined $opt{pit} ? $opt{pit} : delete $yaml->{oauth},
         %{$yaml},
     };
     $self->{conf}->{expander} = $expander;
@@ -55,6 +55,7 @@ sub ignore {
 }
 sub on_tweet {
     my($self, $tweet) = @_;
+    $self->log(debug => "on_tweet hook");
     return if $self->ignore($tweet);
 
     $self->feedgen($tweet);
@@ -98,7 +99,7 @@ sub feedgen {
     }
 
     if ($feed->get_item()) {
-        (undef, my $filename) = tempfile(
+        (undef, my $filename) = File::Temp::tempfile(
             "twitterXXXXX",
             DIR    => $self->conf->{dir},
             SUFFIX => ".rss",
