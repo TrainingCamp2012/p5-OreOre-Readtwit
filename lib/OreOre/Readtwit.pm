@@ -105,6 +105,7 @@ sub feedgen {
             SUFFIX => ".rss",
         );
         $feed->to_file($filename);
+        $self->log(debug => "feed generated");
     }
 }
 
@@ -163,6 +164,7 @@ sub run {
 }
 
 sub log {
+    #AnyEvent::Logger がつかえるっぽい?
     my($self, $level, $msg, %opt) = @_;
 
     return unless $self->should_log($level);
