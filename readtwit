@@ -5,7 +5,7 @@ use FindBin;
 use File::Spec;
 use lib File::Spec->catdir($FindBin::Bin, 'lib');
 
-use OreOre::ReadTwit;
+use OreOre::Readtwit;
 
 use Getopt::Long;
 use Config::Pit;
@@ -19,5 +19,6 @@ if ($version) {
     exit;
 }
 
-OreOre::Readtwit->bootstrap(config => $config, pit => pit_get("twitter.com"));
-
+while (1) {
+    OreOre::Readtwit->bootstrap(config => $config, pit => pit_get("twitter.com"));
+}
