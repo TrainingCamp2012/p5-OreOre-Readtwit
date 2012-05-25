@@ -2,20 +2,19 @@
 
 use strict;
 use utf8;
+use List::Util qw/shuffle/;
+use List::MoreUtils qw/before/;
 use XML::FeedPP;
 
-my $flag = shift;
-my @rsses = do {
-    use File::Basename qw/ dirname /;
-    my $dname  = dirname(__FILE__);
-    glob("$dname/../rss/*.rss");
-};
+my $count = 0;
+my @rsses = before { ++$count > 50 } shuffle glob("/tmp/RSS/*.rss");
 
-my $feed = do{
-    my $date = localtime;
-    #XML::FeedPP::Atom::Atom10->new(title => 'grep { $_->{tweets} =~ URLs} qw/Twitter User Stream/',pubDate => $date );
-    XML::FeedPP::RSS->new(title => 'grep { $_->{tweets} =~ URLs} qw/Twitter User Stream/',pubDate => $date );
-};
+my $date = localtime;
+my $feed = XML::FeedPP::RSS->new(
+    title => 'grep { $_->{tweets} =~ URL} qw/User Stream/',
+    pubDate => $date,
+);
+
 foreach (@rsses) {
     $feed->merge ( $_ ) if ( -s $_ );
     rename($_, $_.".bak");
